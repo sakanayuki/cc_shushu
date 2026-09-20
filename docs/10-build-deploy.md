@@ -130,14 +130,18 @@ jobs:
       - run: npm run build
 
       - name: Upload Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: >-
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
     needs: verify
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -157,7 +161,7 @@ jobs:
 | PR では `deploy` が走らない | `if` 条件で `push` かつ `main` に限定 |
 | `concurrency: pages` | 連続 push 時のデプロイ競合を防ぐ |
 | `cancel-in-progress: false` | 進行中のデプロイを中断すると Pages が不整合な状態になりうるため、キャンセルしない |
-| `workflow_dispatch` | 手動再実行の口を残す |
+| `workflow_dispatch` | 手動再実行の口を残す。**deploy の `if` にも含めないと手動実行で公開されない**（当初これを漏らしていた） |
 
 ### 権限
 
