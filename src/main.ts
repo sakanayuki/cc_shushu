@@ -63,7 +63,7 @@ function main(): void {
   let board: BoardState = createInitialBoard(rng, params, layout);
   let physics: PhysicsWorld = createPhysicsWorld(layout, params);
 
-  let phase: Phase = 'ready';
+  let phase: Phase = 'title';
   let turn: TurnResult | null = null;
   let resolveStartedAt = 0;
   let flyingStartedAt = 0;
@@ -81,7 +81,7 @@ function main(): void {
       layout.logicalWidth - params.layout.edgeMargin - waitingRadius(),
     );
 
-  function startGame(nextSeed: number): void {
+  function startGame(nextSeed: number = seed): void {
     seed = nextSeed;
     rng = createRng(seed);
     layout = computeLayout(surface.width, surface.height, params.layout);
@@ -122,6 +122,11 @@ function main(): void {
 
   const pointer = createPointerInput(canvas, layout, params.flick.maxHistory, {
     onDown(pos) {
+      if (phase === 'title') {
+        // 画面のどこをタップしても開始する。?seed= があればそれを使う。
+        startGame();
+        return false;
+      }
       if (phase === 'gameover') {
         const rect = renderer.getRetryRect();
         if (rect) {
@@ -252,12 +257,16 @@ function main(): void {
       bestScore,
       handCapacity: params.rule.initialHand,
       lostWarning,
+      nowMs: now,
     });
 
     requestAnimationFrame(frame);
   }
 
   requestAnimationFrame(frame);
+
+  // ここまで到達したら起動は成功。起動失敗時のメッセージを隠す。
+  document.body.classList.add('booted');
 }
 
 main();

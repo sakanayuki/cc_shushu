@@ -21,6 +21,8 @@ export interface FrameInput {
   readonly handCapacity: number;
   /** 直前の投擲でロストしたカードがあるか（ロストラインの強調に使う） */
   readonly lostWarning: boolean;
+  /** アニメーションに使う現在時刻（ms） */
+  readonly nowMs: number;
 }
 
 export interface Renderer {
@@ -98,6 +100,55 @@ export function createRenderer(
     ctx.fillStyle = currentTheme.hud.text;
     ctx.font = `700 46px ${currentTheme.fontFamily}`;
     ctx.fillText(String(board.score), l.logicalWidth - 40, y);
+    ctx.restore();
+  }
+
+  function drawTitle(
+    ctx: CanvasRenderingContext2D,
+    l: Layout,
+    bestScore: number,
+    nowMs: number,
+  ): void {
+    const t = currentTheme.title;
+    ctx.save();
+    ctx.fillStyle = t.overlay;
+    ctx.fillRect(0, 0, l.logicalWidth, l.logicalHeight);
+
+    const cx = l.logicalWidth / 2;
+    const cy = l.logicalHeight / 2;
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.fillStyle = t.heading;
+    ctx.font = `800 118px ${currentTheme.fontFamily}`;
+    ctx.fillText('FLICK', cx, cy - 330);
+    ctx.fillStyle = t.accent;
+    ctx.fillText('CARD', cx, cy - 200);
+
+    // 遊び方。ルールが自明でないので一行で示す。
+    ctx.fillStyle = t.body;
+    ctx.font = `600 40px ${currentTheme.fontFamily}`;
+    ctx.fillText('カードをはじいて', cx, cy - 60);
+    ctx.fillText('相手のカードを半分より多く覆うと獲得', cx, cy);
+
+    ctx.fillStyle = t.dim;
+    ctx.font = `500 34px ${currentTheme.fontFamily}`;
+    ctx.fillText('覆いきれなければ もう一枚 重ねてもよい', cx, cy + 64);
+    ctx.fillText('外したカードは失われ、手札が尽きたら終了', cx, cy + 112);
+
+    if (bestScore > 0) {
+      ctx.fillStyle = t.dim;
+      ctx.font = `600 38px ${currentTheme.fontFamily}`;
+      ctx.fillText(`BEST  ${bestScore}`, cx, cy + 210);
+    }
+
+    // ゆっくり明滅させて、タップ待ちであることを示す
+    const pulse = 0.55 + 0.45 * Math.sin(nowMs / 420);
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = t.prompt;
+    ctx.font = `700 52px ${currentTheme.fontFamily}`;
+    ctx.fillText('TAP TO START', cx, cy + 330);
     ctx.restore();
   }
 
@@ -250,9 +301,13 @@ export function createRenderer(
         }
       }
 
-      drawHud(ctx, l, input.board, input.handCapacity);
+      if (input.phase !== 'title') {
+        drawHud(ctx, l, input.board, input.handCapacity);
+      }
 
-      if (input.phase === 'gameover') {
+      if (input.phase === 'title') {
+        drawTitle(ctx, l, input.bestScore, input.nowMs);
+      } else if (input.phase === 'gameover') {
         drawResult(ctx, l, input.board, input.bestScore);
       }
 

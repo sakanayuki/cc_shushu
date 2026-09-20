@@ -100,7 +100,7 @@
         ┌──────────────────────────────────────┐
         │                                      │
         ▼                                      │
-     [BOOT] ──► [READY] ──pointerdown──► [AIMING]
+    [TITLE] ──tap──► [READY] ──pointerdown──► [AIMING]
                    ▲                          │
                    │                     pointerup
                    │                          │
@@ -128,7 +128,7 @@
 
 | 状態 | 説明 | 入力受理 | 物理更新 |
 |---|---|---|---|
-| `BOOT` | 初期化（Canvas、Matter.js、盤面生成） | なし | なし |
+| `TITLE` | タイトル画面。ゲーム名・遊び方・ベストスコアを表示し、タップを待つ | 画面のどこでもタップで開始 | なし |
 | `READY` | 投擲待ち。待機カードが射出ライン中央に表示される | PointerDown を受理 | あり（掠りカードは静止済み） |
 | `AIMING` | 指が接地しており、PointerMove 履歴を記録中 | PointerMove / PointerUp / PointerCancel | あり |
 | `FLYING` | 投げカードが滑走中 | 受理しない（次の投擲は不可） | あり |

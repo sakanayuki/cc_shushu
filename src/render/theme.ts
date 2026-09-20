@@ -34,6 +34,14 @@ export interface Theme {
     readonly handFilled: string;
     readonly handEmpty: string;
   };
+  readonly title: {
+    readonly overlay: string;
+    readonly heading: string;
+    readonly accent: string;
+    readonly body: string;
+    readonly dim: string;
+    readonly prompt: string;
+  };
   readonly result: {
     readonly overlay: string;
     readonly text: string;
@@ -101,6 +109,14 @@ export const defaultTheme: Theme = {
     dim: '#7d8b9c',
     handFilled: '#f4efe1',
     handEmpty: '#3a4657',
+  },
+  title: {
+    overlay: 'rgba(8, 12, 18, 0.9)',
+    heading: '#f4efe1',
+    accent: '#54c7c0',
+    body: '#c3d0de',
+    dim: '#7d8b9c',
+    prompt: '#54c7c0',
   },
   result: {
     overlay: 'rgba(8, 12, 18, 0.86)',

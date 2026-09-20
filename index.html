@@ -29,6 +29,35 @@
         -webkit-tap-highlight-color: transparent;
       }
 
+      #boot-error {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 32px;
+        box-sizing: border-box;
+        text-align: center;
+        color: #c3d0de;
+        background: #101822;
+        font:
+          16px/1.7 system-ui,
+          -apple-system,
+          sans-serif;
+        z-index: 20;
+      }
+
+      #boot-error strong {
+        font-size: 20px;
+        color: #e0574a;
+      }
+
+      body.booted #boot-error {
+        display: none;
+      }
+
       .debug-panel {
         position: fixed;
         /* HUD（上端）とも射出領域（下端）とも重ならない高さに置く */
@@ -130,6 +159,18 @@
   </head>
   <body>
     <canvas id="game"></canvas>
+
+    <!--
+      起動に失敗したとき、真っ黒な画面のまま原因が分からなくなるのを防ぐ。
+      既定で表示しておき、main.ts が起動しきった時点で body.booted により隠す。
+      スクリプトの読み込み失敗や初期化時の例外では、このまま残る。
+    -->
+    <div id="boot-error" role="alert">
+      <strong>読み込みに失敗しました</strong>
+      <span>ページを再読み込みしても直らない場合は、配信されているファイルが
+        ビルド結果ではない可能性があります。</span>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

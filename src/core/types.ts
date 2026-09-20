@@ -63,4 +63,10 @@ export interface TurnResult {
 }
 
 /** ゲーム状態機械の状態 */
-export type Phase = 'boot' | 'ready' | 'aiming' | 'flying' | 'resolving' | 'gameover';
+export type Phase =
+  | 'title'
+  | 'ready'
+  | 'aiming'
+  | 'flying'
+  | 'resolving'
+  | 'gameover';

@@ -183,6 +183,29 @@ permissions:
 
 この設定は**リポジトリ設定の手動操作が1回だけ必要**であり、ワークフローファイルだけでは完結しない。初回デプロイ前に必ず設定すること。
 
+### 設定を誤ると「真っ黒な画面」になる（実際に発生した）
+
+Source が **Deploy from a branch** のままだと、GitHub の旧来のビルダー（ワークフロー名 `pages build and deployment`、パス `dynamic/pages/pages-build-deployment`）が同時に動き、**リポジトリの生のファイルをそのまま公開する**。
+
+生の `index.html` は開発用に `/src/main.ts`（TypeScript のソース）を参照しているため、ブラウザは読み込めず 404 になる。結果として Canvas が初期化されず、**画面が真っ黒のまま何も起きない**。
+
+さらに厄介なことに、これは**競合状態**である。
+
+```text
+22:48:10  Deploy to GitHub Pages     -> dist/ を公開（正しい）
+22:48:17  pages build and deployment -> 7秒後に生ファイルで上書き（壊れる）
+```
+
+どちらが後に完了するかで結果が変わるため、「前回は動いたのに今回は黒い」という再現性のない不具合に見える。実際にこのプロジェクトで発生した。
+
+**対処**: Settings → Pages → Source を **GitHub Actions** にする。これにより旧来のビルダーが動かなくなり、競合そのものが消える。
+
+### 起動失敗を黒画面にしない
+
+上記のような配信事故は、Canvas ベースのアプリでは「真っ黒な画面」としてしか現れず、原因が分からない。そこで `index.html` に既定で表示される `#boot-error` を置き、`main.ts` が起動しきった時点で `body.booted` により隠している。
+
+スクリプトの 404 や初期化時の例外では、このメッセージが残る。黒画面よりはるかに診断しやすい。
+
 ### 公開URL
 
 ```text
@@ -230,6 +253,8 @@ GitHub Pages は静的ファイル配信のみであり、サーバサイド処�
 | 症状 | 原因 | 対処 |
 |---|---|---|
 | 画面が真っ白、コンソールに404 | `base` が未設定または不一致 | `vite.config.ts` の `base` をリポジトリ名に合わせる |
+| **画面が真っ黒**、`/src/main.ts` が404 | Pages の Source がブランチ方式のまま。旧ビルダーが生ファイルを公開している | Settings → Pages → Source を GitHub Actions に |
+| 前回は動いたのに今回は黒い | 上記の競合状態。どちらが後に完了したかで結果が変わる | 同上 |
 | デプロイが権限エラー | `permissions` の不足 | `pages: write` と `id-token: write` を確認 |
 | デプロイジョブがスキップされる | `if` 条件 | `main` への `push` であることを確認 |
 | Pages に何も出ない | Source が未設定 | Settings → Pages → Source を GitHub Actions に |
