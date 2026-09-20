@@ -39,7 +39,9 @@ export function circleOverlapArea(
   const tri = 0.5 * Math.sqrt(
     (-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2)
   );
-  return r1 * r1 * a1 + r2 * r2 * a2 - tri;
+  // 外接ぎりぎりでは桁落ちで負値になりうるため、妥当な範囲へ丸める
+  const area = r1 * r1 * a1 + r2 * r2 * a2 - tri;
+  return clamp(area, 0, Math.PI * Math.min(r1, r2) ** 2);
 }
 ```
 
@@ -48,6 +50,7 @@ export function circleOverlapArea(
 - `Math.acos` の引数は丸め誤差で `±1` をわずかに超えることがある。**必ず `[-1, 1]` にクランプしてから渡す**
 - 三角形の項の平方根の中身も、`d` が `r1+r2` にほぼ等しいとき丸め誤差で負になりうる。`Math.max(0, ...)` で保護する
 - `d === 0`（中心一致）は内包の分岐で捕捉されるため、ゼロ除算は起きない
+- **外接ぎりぎり（`d ≒ r1 + r2`）では円弧項と三角形項がほぼ等しくなり、桁落ちで差が微小な負値になる。** 実装時のテストで実際に検出された。最終結果を `[0, π × min(r1,r2)²]` にクランプして保護する
 
 これらの境界条件はすべて単体テストで検証する（[11-testing.md](./11-testing.md)）。
 

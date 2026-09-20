@@ -136,7 +136,7 @@ speed = clamp(|v_input| × FLICK_POWER, MIN_FLICK_SPEED, MAX_FLICK_SPEED)
 | パラメータ | 初期値 | 単位 | 意味 |
 |---|---:|---|---|
 | `FLICK_POWER` | 6.0 | (論理px/step) / (論理px/ms) | 指の速度を初速に変換する係数 |
-| `MIN_FLICK_SPEED` | 8.0 | 論理px/step | これ未満は誤タップとみなし投擲不成立 |
+| `MIN_FLICK_SPEED` | 16.0 | 論理px/step | これ未満は誤タップとみなし投擲不成立 |
 | `MAX_FLICK_SPEED` | 62.0 | 論理px/step | 上限 |
 
 ### 線形を選んだ根拠

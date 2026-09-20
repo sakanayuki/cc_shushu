@@ -57,7 +57,7 @@ export function createRng(seed: number): Rng {
 
 完全ランダム配置にはしない（原文 §6）。盤面を距離帯で分割し、難易度スロットを固定する。
 
-| スロット | 難易度 | 枚数 | 距離帯（射出ラインからの距離の比率） | 半径 | 得点 |
+| スロット | 難易度 | 枚数 | 距離帯（配置可能域内の比率） | 半径 | 得点 |
 |---:|---|---:|---|---|---:|
 | 0 | Easy | 1 | 0.15 〜 0.40 | 40 〜 50 | 10 〜 20 |
 | 1 | Easy | 1 | 0.15 〜 0.40 | 40 〜 50 | 10 〜 20 |
@@ -67,14 +67,22 @@ export function createRng(seed: number): Rng {
 
 寸法はすべて**半径**（論理px）である。置きカードの半径は投げカードの半径 46 を超えないよう設定している（[02-rules.md](./02-rules.md) 2.6節）。
 
-距離の比率は、`launchY` から `placedAreaTop` までの距離に対する割合で定義する。
+距離の比率は、**配置可能域の下端（比率0 = 最も手前）から上端（比率1 = 最も奥）までの割合**で定義する。
 
 ```ts
-const span = layout.launchY - layout.placedAreaTop;
-const y = layout.launchY - span * rng.range(band.min, band.max);
+const span = layout.placedAreaBottom - layout.placedAreaTop;
+const y = layout.placedAreaBottom - span * rng.range(band.min, band.max);
 ```
 
 **比率で定義することで、論理高さがクランプによって変動しても難易度の意味が保たれる。** 例えば Hard は常に「盤面の最も奥」であり、絶対座標で固定した場合のように、端末によって Hard が中距離になってしまう事故が起きない。
+
+### 基準を射出ラインにしてはいけない理由
+
+当初この比率を「射出ライン `launchY` からの距離」で定義していたが、実装時のテストで**論理高さ1600の端末（iPad縦など）で Easy カードが一切配置できなくなる**ことが判明した。
+
+`launchY` と `placedAreaBottom` の間には射出領域とクリアランスで約410論理px の空白があるため、`launchY` を基準にすると近距離帯（比率0.15〜0.40）が配置可能域の下端より下に落ちてしまう。論理高さ1600では Easy の抽選範囲が `y ∈ [918, 1226]` となる一方、`placedAreaBottom` は 960 であり、半径50のカードを置ける `y ≤ 910` を満たす値が範囲内にほぼ存在しなくなる。
+
+配置可能域そのものを基準にすれば、比率の全範囲が定義上必ず配置可能域に収まる。
 
 ### スロット制の意図
 
