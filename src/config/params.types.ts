@@ -23,16 +23,17 @@ export interface CardParams {
 }
 
 export interface PhysicsParams {
-  frictionAir: number;
-  friction: number;
-  frictionStatic: number;
-  /** 投げカード同士の反発係数 */
-  restitution: number;
-  /** 壁の反発係数 */
-  wallRestitution: number;
-  density: number;
-  positionIterations: number;
-  velocityIterations: number;
+  /**
+   * 等加速度減速の減速量（論理px/step^2）。
+   * 毎ステップ速度の大きさからこの値を引き、0 を下回ったら停止させる。
+   * 床の上を滑る物体のモデルであり、指数減衰と違って有限時間で厳密に停止する。
+   */
+  linearDecel: number;
+  /**
+   * 追加の指数減衰（0 で無効）。高速域だけ少し効かせたい場合に使う。
+   * 0 のままなら停止距離は初速の2乗に比例する。
+   */
+  drag: number;
 }
 
 export interface SettleParams {
@@ -88,6 +89,11 @@ export interface RuleParams {
   initialHand: number;
   /** 獲得に必要な被覆率。厳密に超える必要がある */
   captureThreshold: number;
+  /**
+   * 被覆率を和集合として求めるときのサンプル点数。
+   * 投げカードが複数重なっている置きカードでのみ使われる。
+   */
+  coverageSamples: number;
 }
 
 export interface GameParams {

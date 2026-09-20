@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { circleArea, circleOverlapArea } from '../src/core/geometry';
+import {
+  circleArea,
+  circleOverlapArea,
+  coverageRatio,
+  distance as distanceBetween,
+} from '../src/core/geometry';
 import { createRng } from '../src/core/rng';
 
 const O = (x: number, y: number) => ({ x, y });
@@ -74,5 +79,93 @@ describe('circleOverlapArea', () => {
       expect(Number.isFinite(a)).toBe(true);
       expect(a).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+describe('coverageRatio — 和集合としての被覆率', () => {
+  const S = 20000;
+
+  it('重なる投げカードがなければ0を返す', () => {
+    expect(
+      coverageRatio({ pos: O(0, 0), radius: 50 }, [{ pos: O(500, 0), radius: 92 }], S),
+    ).toBe(0);
+  });
+
+  it('1枚で完全に覆われていれば1を返す', () => {
+    expect(
+      coverageRatio({ pos: O(0, 0), radius: 40 }, [{ pos: O(0, 0), radius: 92 }], S),
+    ).toBeCloseTo(1, 6);
+  });
+
+  it('1枚の場合は解析解と厳密に一致する（サンプリングを使わない）', () => {
+    const placed = { pos: O(0, 0), radius: 100 };
+    const t = { pos: O(70, 0), radius: 92 };
+    const exact =
+      circleOverlapArea(placed.pos, placed.radius, t.pos, t.radius) / circleArea(placed.radius);
+    expect(coverageRatio(placed, [t], S)).toBeCloseTo(exact, 12);
+  });
+
+  it('投げカード同士が重ならない場合、和集合は単純加算と一致する', () => {
+    const placed = { pos: O(0, 0), radius: 100 };
+    // 左右に離して配置し、2枚が互いに重ならないようにする
+    const a = { pos: O(-150, 0), radius: 92 };
+    const b = { pos: O(150, 0), radius: 92 };
+    expect(distanceBetween(a.pos, b.pos)).toBeGreaterThan(a.radius + b.radius);
+
+    const sum =
+      (circleOverlapArea(placed.pos, placed.radius, a.pos, a.radius) +
+        circleOverlapArea(placed.pos, placed.radius, b.pos, b.radius)) /
+      circleArea(placed.radius);
+
+    expect(coverageRatio(placed, [a, b], S)).toBeCloseTo(sum, 2);
+  });
+
+  it('同じ位置に2枚重ねても被覆率は1枚分から増えない（二重計上しない）', () => {
+    const placed = { pos: O(0, 0), radius: 100 };
+    const t = { pos: O(80, 0), radius: 92 };
+    const one = coverageRatio(placed, [t], S);
+    const two = coverageRatio(placed, [t, { ...t }], S);
+    expect(two).toBeCloseTo(one, 2);
+    expect(one).toBeLessThan(0.5);
+  });
+
+  it('違う位置に2枚重ねれば被覆率が上がり、過半数を超えうる', () => {
+    const placed = { pos: O(0, 0), radius: 100 };
+    const a = { pos: O(-85, 0), radius: 92 };
+    const b = { pos: O(85, 0), radius: 92 };
+    const one = coverageRatio(placed, [a], S);
+    const both = coverageRatio(placed, [a, b], S);
+
+    expect(one).toBeLessThanOrEqual(0.5);
+    expect(both).toBeGreaterThan(0.5);
+    expect(both).toBeGreaterThan(one);
+  });
+
+  it('被覆率は常に 0..1 に収まり、枚数を増やしても単調非減少', () => {
+    const placed = { pos: O(0, 0), radius: 100 };
+    const discs = [
+      { pos: O(-70, -40), radius: 92 },
+      { pos: O(70, -40), radius: 92 },
+      { pos: O(0, 80), radius: 92 },
+    ];
+    let prev = 0;
+    for (let n = 0; n <= discs.length; n++) {
+      const c = coverageRatio(placed, discs.slice(0, n), S);
+      expect(c).toBeGreaterThanOrEqual(0);
+      expect(c).toBeLessThanOrEqual(1);
+      expect(c).toBeGreaterThanOrEqual(prev - 0.01);
+      prev = c;
+    }
+  });
+
+  it('決定論的である（同じ入力から常に同じ値）', () => {
+    const placed = { pos: O(3, -7), radius: 83 };
+    const discs = [
+      { pos: O(-40, 10), radius: 92 },
+      { pos: O(55, -20), radius: 92 },
+    ];
+    const a = coverageRatio(placed, discs, S);
+    const b = coverageRatio(placed, discs, S);
+    expect(a).toBe(b);
   });
 });

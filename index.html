@@ -31,8 +31,9 @@
 
       .debug-panel {
         position: fixed;
-        top: 8px;
-        left: 8px;
+        /* HUD（上端）とも射出領域（下端）とも重ならない高さに置く */
+        top: 18%;
+        left: 0;
         width: min(280px, 72vw);
         max-height: 78dvh;
         overflow-y: auto;
@@ -47,6 +48,7 @@
 
       .debug-panel.collapsed {
         width: auto;
+        opacity: 0.75;
       }
 
       .debug-panel.collapsed .debug-body {

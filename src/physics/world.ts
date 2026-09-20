@@ -2,7 +2,7 @@ import Matter from 'matter-js';
 import type { GameParams } from '../config/params.types';
 import type { Layout } from '../core/coords';
 import type { BoardState, ThrownCard, Vec2 } from '../core/types';
-import { createThrownBody, createWalls, parseThrownId } from './bodies';
+import { createThrownBody, parseThrownId } from './bodies';
 import { createSettler, type Settler } from './settle';
 import { createStepper } from './stepper';
 
@@ -15,13 +15,13 @@ export interface PhysicsWorld {
   step(elapsedMs: number): void;
   /** 現在のボディ群から thrown 配列を再構築する */
   readBack(board: BoardState): BoardState;
-  /** 上端を越えて失われたカードのIDを返す（同時に世界から除去する） */
+  /** 盤面外へ出て失われたカードのIDを返す（同時に世界から除去する） */
   takeLostIds(): number[];
   isSettled(): boolean;
   /** 全カードの速度を0へ丸める */
   freeze(): void;
   resetSettle(): void;
-  /** 物理パラメータの実行時変更を既存ボディへ反映する */
+  /** 物理パラメータの実行時変更を反映する */
   applyParams(p: GameParams): void;
   dispose(): void;
 }
@@ -31,25 +31,50 @@ function setZero(b: Matter.Body): void {
   Matter.Body.setAngularVelocity(b, 0);
 }
 
+/**
+ * 等加速度減速を1ステップ分適用する。
+ *
+ * 速度の大きさから linearDecel を引き、0 を下回ったら厳密に停止させる。
+ * 指数減衰と違って有限時間で完全に止まるため、末尾でカードがじりじり滑り続けない。
+ * 床の上を滑らせた物体の挙動に対応する。
+ */
+function applyDeceleration(body: Matter.Body, decel: number, drag: number): void {
+  const vx = body.velocity.x;
+  const vy = body.velocity.y;
+  const speed = Math.hypot(vx, vy);
+  if (speed === 0) return;
+
+  const dragged = drag > 0 ? speed * (1 - drag) : speed;
+  const next = dragged - decel;
+
+  if (next <= 0) {
+    setZero(body);
+    return;
+  }
+  const k = next / speed;
+  Matter.Body.setVelocity(body, { x: vx * k, y: vy * k });
+}
+
 export function createPhysicsWorld(layout: Layout, params: GameParams): PhysicsWorld {
   let p = params;
 
+  // 衝突が存在しないため、反復回数は最小でよい。
   const engine = Matter.Engine.create({
     gravity: { x: 0, y: 0, scale: 0 },
-    // スリープ判定は Matter に任せず自前で行う（後続の衝突に反応しなくなる事故を避ける）
     enableSleeping: false,
-    positionIterations: p.physics.positionIterations,
-    velocityIterations: p.physics.velocityIterations,
+    positionIterations: 1,
+    velocityIterations: 1,
   });
 
-  const walls = createWalls(layout, p);
-  Matter.Composite.add(engine.world, walls);
-
+  // 壁は置かない。盤面の四辺はすべて場外であり、出たカードは失われる。
   const bodies = new Map<number, Matter.Body>();
   const settler: Settler = createSettler(p.settle, setZero);
 
   const stepper = createStepper((dt) => {
     Matter.Engine.update(engine, dt);
+    for (const body of bodies.values()) {
+      applyDeceleration(body, p.physics.linearDecel, p.physics.drag);
+    }
     settler.update([...bodies.values()], dt);
   });
 
@@ -66,7 +91,7 @@ export function createPhysicsWorld(layout: Layout, params: GameParams): PhysicsW
 
       for (const t of board.thrown) {
         if (bodies.has(t.id)) continue;
-        const body = createThrownBody(t.id, t.pos, t.radius, p);
+        const body = createThrownBody(t.id, t.pos, t.radius);
         bodies.set(t.id, body);
         Matter.Composite.add(engine.world, body);
       }
@@ -101,8 +126,9 @@ export function createPhysicsWorld(layout: Layout, params: GameParams): PhysicsW
     takeLostIds() {
       const lost: number[] = [];
       for (const [id, body] of bodies) {
-        // 中心が上端を越えたら場外。全投げカードに共通して適用される。
-        if (body.position.y < 0) {
+        // 中心が盤面の外へ出たら場外。四辺すべてに等しく適用される。
+        const { x, y } = body.position;
+        if (x < 0 || x > layout.logicalWidth || y < 0 || y > layout.logicalHeight) {
           lost.push(id);
           Matter.Composite.remove(engine.world, body);
           bodies.delete(id);
@@ -125,17 +151,6 @@ export function createPhysicsWorld(layout: Layout, params: GameParams): PhysicsW
 
     applyParams(next) {
       p = next;
-      engine.positionIterations = next.physics.positionIterations;
-      engine.velocityIterations = next.physics.velocityIterations;
-      for (const body of bodies.values()) {
-        body.frictionAir = next.physics.frictionAir;
-        body.friction = next.physics.friction;
-        body.frictionStatic = next.physics.frictionStatic;
-        body.restitution = next.physics.restitution;
-      }
-      for (const wall of walls) {
-        wall.restitution = next.physics.wallRestitution;
-      }
     },
 
     dispose() {

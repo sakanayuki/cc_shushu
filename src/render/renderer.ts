@@ -48,15 +48,14 @@ export function createRenderer(
     ctx.fillStyle = currentTheme.launchZone;
     ctx.fillRect(0, l.launchZoneTop, l.logicalWidth, l.logicalHeight - l.launchZoneTop);
 
-    // ロストライン。越えたらカードを失うことが見えている必要がある。
+    // 盤面の境界。四辺すべてが場外であり、越えたらカードを失う。
+    // 上端だけを描くと「横は安全」という誤解を生むため、全周を描く。
     ctx.save();
     ctx.setLineDash([18, 14]);
-    ctx.lineWidth = warn ? 6 : 3;
+    const lw = warn ? 8 : 4;
+    ctx.lineWidth = lw;
     ctx.strokeStyle = warn ? currentTheme.lostLineWarn : currentTheme.lostLine;
-    ctx.beginPath();
-    ctx.moveTo(0, 3);
-    ctx.lineTo(l.logicalWidth, 3);
-    ctx.stroke();
+    ctx.strokeRect(lw / 2, lw / 2, l.logicalWidth - lw, l.logicalHeight - lw);
     ctx.restore();
 
     // 射出ライン
@@ -195,6 +194,7 @@ export function createRenderer(
       if (input.phase === 'resolving' && input.turn) {
         for (const card of input.turn.capturedCards) {
           currentSkin.drawPlacedCard(ctx, card, currentTheme, fade);
+          currentSkin.drawPlacedScore(ctx, card, currentTheme, fade);
         }
       }
 
@@ -207,6 +207,11 @@ export function createRenderer(
         const state: ThrownState =
           input.phase === 'flying' ? 'flying' : overlappingIds.has(card.id) ? 'grazing' : 'flying';
         currentSkin.drawThrownCard(ctx, card, state, currentTheme, 1);
+      }
+
+      // 得点ラベルは投げカードより手前に描き、重ねても必ず読めるようにする
+      for (const card of input.board.placed) {
+        currentSkin.drawPlacedScore(ctx, card, currentTheme, 1);
       }
 
       if (input.waitingPos) {

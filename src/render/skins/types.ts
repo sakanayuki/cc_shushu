@@ -16,6 +16,14 @@ export interface CardSkin {
     alpha: number,
   ): void;
 
+  /** 置きカードの得点ラベルのみを描く（投げカードより手前に重ねるため分離している） */
+  drawPlacedScore(
+    ctx: CanvasRenderingContext2D,
+    card: PlacedCard,
+    theme: Theme,
+    alpha: number,
+  ): void;
+
   drawThrownCard(
     ctx: CanvasRenderingContext2D,
     card: ThrownCard,

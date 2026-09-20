@@ -26,13 +26,22 @@ export const defaultSkin: CardSkin = {
     ctx.globalAlpha = alpha * 0.45;
     ctx.stroke();
 
+    ctx.restore();
+  },
+
+  drawPlacedScore(ctx, card, theme, alpha) {
+    const v = theme.placedCard[card.difficulty];
+    ctx.save();
     ctx.globalAlpha = alpha;
     ctx.fillStyle = v.labelColor;
-    ctx.font = `700 ${Math.round(card.radius * 0.78)}px ${theme.fontFamily}`;
+    ctx.font = `700 ${Math.round(card.radius * 0.7)}px ${theme.fontFamily}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    // 半透明の投げカードの上でも読めるよう縁取りする
+    ctx.lineWidth = Math.max(3, card.radius * 0.1);
+    ctx.strokeStyle = 'rgba(10, 16, 24, 0.75)';
+    ctx.strokeText(String(card.score), card.pos.x, card.pos.y + card.radius * 0.03);
     ctx.fillText(String(card.score), card.pos.x, card.pos.y + card.radius * 0.03);
-
     ctx.restore();
   },
 
@@ -55,9 +64,9 @@ export const defaultSkin: CardSkin = {
     ctx.stroke();
 
     // 中心を示す小さなドット。止めた位置を目視で確認しやすくする
-    circle(ctx, card.pos.x, card.pos.y, Math.max(2, card.radius * 0.1));
-    ctx.fillStyle = v.labelColor;
-    ctx.globalAlpha = alpha * 0.5;
+    circle(ctx, card.pos.x, card.pos.y, Math.max(2, card.radius * 0.06));
+    ctx.fillStyle = v.stroke;
+    ctx.globalAlpha = alpha * 0.7;
     ctx.fill();
 
     ctx.restore();

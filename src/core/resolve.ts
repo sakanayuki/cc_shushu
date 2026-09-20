@@ -1,7 +1,7 @@
 import type { GameParams } from '../config/params.types';
 import { refillSlot } from './board';
 import type { Layout } from './coords';
-import { circleArea, circleOverlapArea } from './geometry';
+import { coverageRatio, distance } from './geometry';
 import type { Rng } from './rng';
 import type { BoardState, CoverageResult, PlacedCard, TurnResult } from './types';
 
@@ -16,20 +16,14 @@ export function resolveTurn(
   layout: Layout,
 ): TurnResult {
   // [1] 被覆率の計算。
-  // 投げカード同士は剛体で重なれないため、重なり面積の単純加算が
-  // 和集合面積と厳密に一致する（二重計上が原理的に起きない）。
+  // 投げカード同士は衝突せず重なりうるため、個々の重なり面積を単純加算すると
+  // 二重計上になる。重なり領域の**和集合**として求める（coverageRatio）。
   const coverages: CoverageResult[] = board.placed.map((placed) => {
-    const area = circleArea(placed.radius);
-    let sum = 0;
     const ids: number[] = [];
     for (const t of board.thrown) {
-      const a = circleOverlapArea(placed.pos, placed.radius, t.pos, t.radius);
-      if (a > 0) {
-        sum += a;
-        ids.push(t.id);
-      }
+      if (distance(placed.pos, t.pos) < placed.radius + t.radius) ids.push(t.id);
     }
-    const coverage = Math.min(1, sum / area);
+    const coverage = coverageRatio(placed, board.thrown, p.rule.coverageSamples);
     return {
       placedId: placed.id,
       coverage,

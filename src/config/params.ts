@@ -7,31 +7,25 @@ import type { GameParams } from './params.types';
  */
 export const defaultParams: GameParams = {
   flick: {
-    flickPower: 6.0,
-    minFlickSpeed: 16.0,
-    maxFlickSpeed: 62.0,
+    flickPower: 8.0,
+    minFlickSpeed: 22.0,
+    maxFlickSpeed: 60.0,
     inputSampleWindowMs: 80,
     peakBlend: 0.35,
     minSamples: 3,
     maxHistory: 32,
   },
   card: {
-    thrownRadius: 46,
+    thrownRadius: 92,
   },
   physics: {
-    frictionAir: 0.028,
-    friction: 0,
-    frictionStatic: 0,
-    restitution: 0.35,
-    wallRestitution: 0.2,
-    density: 0.002,
-    positionIterations: 8,
-    velocityIterations: 6,
+    linearDecel: 0.52,
+    drag: 0,
   },
   settle: {
-    stopSpeed: 0.35,
+    stopSpeed: 0.5,
     stopAngularSpeed: 0.02,
-    stopDurationMs: 180,
+    stopDurationMs: 120,
     settleTimeoutMs: 6000,
     resolveDisplayMs: 900,
   },
@@ -47,22 +41,23 @@ export const defaultParams: GameParams = {
     maxDpr: 2,
   },
   board: {
-    // 半径はいずれも投げカードの半径 46 以下。1枚で閾値50%に到達できる保証。
+    // 半径はいずれも投げカードの半径 92 以下。1枚で閾値50%に到達できる保証。
     slots: [
-      { difficulty: 'easy', distMin: 0.15, distMax: 0.4, radiusMin: 40, radiusMax: 50, scoreMin: 10, scoreMax: 20 },
-      { difficulty: 'easy', distMin: 0.15, distMax: 0.4, radiusMin: 40, radiusMax: 50, scoreMin: 10, scoreMax: 20 },
-      { difficulty: 'normal', distMin: 0.4, distMax: 0.7, radiusMin: 27, radiusMax: 38, scoreMin: 30, scoreMax: 50 },
-      { difficulty: 'normal', distMin: 0.4, distMax: 0.7, radiusMin: 27, radiusMax: 38, scoreMin: 30, scoreMax: 50 },
-      { difficulty: 'hard', distMin: 0.7, distMax: 0.95, radiusMin: 18, radiusMax: 25, scoreMin: 60, scoreMax: 100 },
+      { difficulty: 'easy', distMin: 0.15, distMax: 0.4, radiusMin: 80, radiusMax: 100, scoreMin: 10, scoreMax: 20 },
+      { difficulty: 'easy', distMin: 0.15, distMax: 0.4, radiusMin: 80, radiusMax: 100, scoreMin: 10, scoreMax: 20 },
+      { difficulty: 'normal', distMin: 0.4, distMax: 0.7, radiusMin: 54, radiusMax: 76, scoreMin: 30, scoreMax: 50 },
+      { difficulty: 'normal', distMin: 0.4, distMax: 0.7, radiusMin: 54, radiusMax: 76, scoreMin: 30, scoreMax: 50 },
+      { difficulty: 'hard', distMin: 0.7, distMax: 0.95, radiusMin: 36, radiusMax: 50, scoreMin: 60, scoreMax: 100 },
     ],
-    targetMinGap: 40,
+    targetMinGap: 30,
     refillClearance: 20,
     maxPlacementAttempts: 200,
-    gapRelaxSteps: [40, 20, 0],
+    gapRelaxSteps: [30, 15, 0],
   },
   rule: {
     initialHand: 5,
     captureThreshold: 0.5,
+    coverageSamples: 10000,
   },
 };
 

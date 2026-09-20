@@ -71,16 +71,18 @@ export const defaultTheme: Theme = {
       labelColor: '#ffdcef',
     },
   },
+  // 投げカードは半透明。下の置きカードと得点が透けて見えないと、
+  // 「どこがまだ覆われていないか」を判断できず被覆を積み上げられない。
   thrownCard: {
-    fill: '#e8e3d5',
+    fill: 'rgba(232, 227, 213, 0.5)',
     stroke: '#fffdf6',
-    strokeWidth: 3,
+    strokeWidth: 4,
     labelColor: '#101822',
   },
   grazingCard: {
-    fill: '#c9c2ad',
+    fill: 'rgba(232, 227, 213, 0.5)',
     stroke: '#efe9d8',
-    strokeWidth: 3,
+    strokeWidth: 4,
     labelColor: '#101822',
   },
   waitingCard: {

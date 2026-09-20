@@ -58,9 +58,10 @@ describe('estimateLaunchVelocity', () => {
 
   it('受理される最弱のフリックは、最も手前のカードに届く', () => {
     // 「受理されるが何にも届かず、確実に手札を失う投擲」が存在しないことの回帰テスト。
-    // 指数減衰では総移動距離 ≒ v0 / frictionAir。
+    // 等加速度減速では総移動距離 = v0^2 / (2a)。
     const all = params();
-    const reach = all.flick.minFlickSpeed / all.physics.frictionAir;
+    const reach =
+      (all.flick.minFlickSpeed * all.flick.minFlickSpeed) / (2 * all.physics.linearDecel);
 
     for (const [vw, vh] of [
       [375, 667],
